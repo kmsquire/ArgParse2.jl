@@ -3,6 +3,12 @@ uuid = "1f1e2b29-1d7f-49d8-813e-55fc6f50152b"
 authors = ["Kevin Squire"]
 version = "0.1.0"
 
+[deps]
+InvertedIndices = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
+IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+
 [compat]
 julia = "1.3.1"
 
