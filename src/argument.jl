@@ -14,6 +14,9 @@
     dest::Symbol
 end
 
+const VECTOR_TYPE = true
+const SCALAR_TYPE = false
+
 function Argument(name_or_flags::Union{Symbol,String}...;
     action::Union{Symbol,String,Nothing} = nothing,
     nargs::Union{Int,Char,Nothing} = nothing,
