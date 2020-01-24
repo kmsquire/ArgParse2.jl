@@ -22,7 +22,7 @@ function add_argument(parser::ArgumentParser, name_or_flags::String...; kwargs..
         push!(parser.positional_args, arg)
     else
         for flag in arg.flags
-            flag in keys(parser._flag_args) && throw(ArgumentError("Flag `$flag` specified multiple times"))
+            flag in keys(parser._flag_args) && throw(ArgumentError("flag `$flag` defined multiple times"))
             parser._flag_args[flag] = arg
         end
         push!(parser.optional_args, arg)
@@ -34,6 +34,7 @@ end
 is_positional(arg::Argument) = isempty(arg.flags)
 
 function parse_args(parser::ArgumentParser, args = ARGS)
+    args = split_char_args(args)
 
     pos_arg_state = iterate(parser.positional_args)
     cmdline_arg_state = iterate(args)
@@ -55,6 +56,22 @@ function parse_args(parser::ArgumentParser, args = ARGS)
     end
 
     return collect_arg_values(arg_vars)
+end
+
+function split_char_args(args)
+    new_args = String[]
+    for arg in args
+        dash_count, remainder = remove_dashes(arg)
+        if dash_count === 1 && length(remainder) > 1
+            for c in remainder
+                push!(new_args, "-$c")
+            end
+        else
+            push!(new_args, arg)
+        end
+    end
+
+    return new_args
 end
 
 function init_arg_variables(parser::ArgumentParser)
@@ -201,6 +218,8 @@ function process_zero_arg_flag(argument, dest_variable, args, cmdline_state)
         dest_variable.value = false
     elseif action === :store_const
         dest_variable.value = argument.constant
+    elseif action === :count
+        dest_variable.value += 1
     else
         throw(ArgumentError("Unexpected action: $action"))
     end
