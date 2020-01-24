@@ -11,5 +11,6 @@ include("utils.jl")
 include("argument.jl")
 include("variable.jl")
 include("argument_parser.jl")
+include("parse.jl")
 
 end # module
