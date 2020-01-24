@@ -79,5 +79,24 @@ end
 
         @test parse_args(parser, ["-vvv"]) === (verbose=3,)
     end
-
 end
+
+@testset "Test Help" begin
+    @testset "No help" begin
+        parser = ArgumentParser(add_help=false)
+        io = IOBuffer()
+        show_help(io, parser, exit_when_done=false)
+        @test String(take!(io)) == "Usage: PROGRAM\n\n"
+    end
+
+    @testset "With help" begin
+        parser = ArgumentParser()
+        io = IOBuffer()
+        show_help(io, parser, exit_when_done=false)
+        output = String(take!(io))
+
+        @test occursin("-h, --help", output)
+    end
+end
+
+nothing
