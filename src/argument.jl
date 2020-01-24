@@ -62,7 +62,7 @@ function Argument(name_or_flags::Union{Symbol,String}...;
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
-    Argument{type, dest_is_vector}(;
+    Argument{type,dest_is_vector}(;
         name = name,
         flags = flags,
         nargs = nargs,
@@ -199,4 +199,4 @@ end
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
 get_nargs(nargs::Nothing, ::Type{Vector}, action) = '*'
 get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count] ? 0 : 1
-get_nargs(nargs::Union{Int, Char}, _, _) = nargs
+get_nargs(nargs::Union{Int,Char}, _, _) = nargs
