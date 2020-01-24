@@ -52,6 +52,7 @@ function init_arg_variables(parser::ArgumentParser)
     end
 
     for arg in parser.optional_args
+        arg.action === :help && continue
         name = arg.dest
         current_arg_var = get(arg_vars, name, nothing)
         arg_vars[name] = init_arg_variable(arg, current_arg_var)
@@ -148,6 +149,10 @@ end
 function parse_optional_arg(parser, args, arg_vars, unseen_req_args, cmdline_arg_state)
     cmdline_flag, cmdline_state = cmdline_arg_state
     argument = parser.flag_args[cmdline_flag]
+
+    if argument.action == :help
+        show_help(parser)
+    end
 
     dest_variable = arg_vars[argument.dest]
     nargs = argument.nargs

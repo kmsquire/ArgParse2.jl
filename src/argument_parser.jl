@@ -1,3 +1,5 @@
+HELP_TEXT = "show this help message and exit"
+
 struct ArgumentParser
     prog::Optional{String}
     usage::Optional{String}
@@ -13,7 +15,8 @@ function ArgumentParser(;
     prog = nothing,
     usage = nothing,
     description = nothing,
-    epilog = nothing)
+    epilog = nothing,
+    add_help = true)
 
     positional_args = Argument[]
     optional_args = Argument[]
@@ -21,6 +24,7 @@ function ArgumentParser(;
     has_numeric_flags = Ref{Bool}(false)
 
     parser = ArgumentParser(prog, usage, description, epilog, positional_args, optional_args, flag_args, has_numeric_flags)
+    add_help && add_argument(parser, "-h", "--help", action = "help", help = HELP_TEXT)
 
     return parser
 end

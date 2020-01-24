@@ -1,3 +1,5 @@
+const VECTOR_TYPE = true
+const SCALAR_TYPE = false
 
 @kwdef struct Argument{T,U,V}
     name::String
@@ -13,9 +15,6 @@
     metavar::Optional{String} = nothing
     dest::Symbol
 end
-
-const VECTOR_TYPE = true
-const SCALAR_TYPE = false
 
 function Argument(name_or_flags::Union{Symbol,String}...;
     action::Union{Symbol,String,Nothing} = nothing,
@@ -193,7 +192,7 @@ end
 
 validate_action(action) = nothing
 function validate_action(action::Symbol)
-    if !(action in [:store_true, :store_false, :store_const, :append, :append_const, :count])
+    if !(action in [:store_true, :store_false, :store_const, :append, :append_const, :count, :help])
         throw(ArgumentError("Invalid action: `$(String(action))`"))
     end
 end
@@ -207,5 +206,5 @@ end
 
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
 get_nargs(nargs::Nothing, ::Type{Vector}, action) = :*
-get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count] ? 0 : 1
+get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
 get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
