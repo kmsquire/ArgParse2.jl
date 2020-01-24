@@ -14,6 +14,9 @@
     dest::Symbol
 end
 
+const VECTOR_TYPE = true
+const SCALAR_TYPE = false
+
 function Argument(name_or_flags::Union{Symbol,String}...;
     action::Union{Symbol,String,Nothing} = nothing,
     nargs::Union{Int,Char,Nothing} = nothing,
@@ -32,24 +35,30 @@ function Argument(name_or_flags::Union{Symbol,String}...;
     action = str_to_symbol(action)
     dest = str_to_symbol(dest)
 
-    if default === nothing && action in [:store_true, :store_false]
-        default = action === :store_true ? false : true
-    end
+    validate_action(action)
 
     if type === Nothing
         if action in [:store_true, :store_false]
             type = Bool
+        elseif action === :count
+            type = Int
         else
             type = coalesce_promote_types(R, S, T)
         end
     end
 
-    validate_action(action)
+    if default === nothing
+        if action in [:store_true, :store_false]
+            default = action === :store_true ? false : true
+        elseif action === :count
+            default = 0
+        end
+    end
+
+    nargs = get_nargs(nargs, type, action)
     validate_nargs(nargs)
 
     dest_is_vector = need_vector(action, nargs, default)
-
-    nargs = get_nargs(nargs, type, action)
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
@@ -112,16 +121,6 @@ function extract_flag_names(input_flags)
     return flag_names, flags
 end
 
-function remove_dashes(input_flag)
-    first_non_dash = findfirst(!isequal('-'), input_flag)
-    return first_non_dash - 1, input_flag[first_non_dash:end]
-end
-
-function longest(strs::Vector{String})
-    idx = argmax(length.(strs))
-    return strs[idx]
-end
-
 function coalesce_promote_types(types::DataType...)
     length(types) === 0 && return String
 
@@ -140,7 +139,7 @@ end
 
 function validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
-    if action in [:store_true, :store_false, :store_const, :append_const]
+    if action in [:store_true, :store_false, :store_const, :append_const, :count]
         # Test that nargs and action are consistent
         if nargs !== nothing && nargs !== 0
             throw(ArgumentError("nargs=`$nargs` cannot be specified with action=`$action`"))
@@ -148,7 +147,7 @@ function validate_args(action, nargs, constant, default, type, choices, dest_is_
 
         # Test that action and choices are consistent
         if choices !== nothing
-            throw(ArgumentError("You do not need to specify `choices` for action=`$action`"))
+            throw(ArgumentError("You cannot specify `choices` for action=`$action`"))
         end
     end
 
@@ -199,5 +198,5 @@ end
 
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
 get_nargs(nargs::Nothing, ::Type{Vector}, action) = '*'
-get_nargs(nargs::Nothing, _, action) = action in [:store_const, :append_const] ? 0 : 1
+get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count] ? 0 : 1
 get_nargs(nargs::Union{Int, Char}, _, _) = nargs

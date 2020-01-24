@@ -68,7 +68,7 @@ end
 
         add_argument("--verbose", "-v", action="count", default=0)
 
-        @test_broken parse_args(parser, ["-vvv"]) === (verbose=3,)
+        @test parse_args(parser, ["-vvv"]) === (verbose=3,)
     end
 
 end

@@ -22,7 +22,7 @@ function add_argument(parser::ArgumentParser, name_or_flags::String...; kwargs..
         push!(parser.positional_args, arg)
     else
         for flag in arg.flags
-            flag in keys(parser._flag_args) && throw(ArgumentError("Flag `$flag` specified multiple times"))
+            flag in keys(parser._flag_args) && throw(ArgumentError("flag `$flag` defined multiple times"))
             parser._flag_args[flag] = arg
         end
         push!(parser.optional_args, arg)
@@ -34,6 +34,7 @@ end
 is_positional(arg::Argument) = isempty(arg.flags)
 
 function parse_args(parser::ArgumentParser, args = ARGS)
+    args = split_char_args(args)
 
     pos_arg_state = iterate(parser.positional_args)
     cmdline_arg_state = iterate(args)
@@ -55,6 +56,22 @@ function parse_args(parser::ArgumentParser, args = ARGS)
     end
 
     return collect_arg_values(arg_vars)
+end
+
+function split_char_args(args)
+    new_args = String[]
+    for arg in args
+        dash_count, remainder = remove_dashes(arg)
+        if dash_count === 1 && length(remainder) > 1
+            for c in remainder
+                push!(new_args, "-$c")
+            end
+        else
+            push!(new_args, arg)
+        end
+    end
+
+    return new_args
 end
 
 function init_arg_variables(parser::ArgumentParser)
@@ -137,23 +154,23 @@ function advance(nargs::Char, var, positional_args, argument, positional_state)
     return iterate(positional_args, positional_state)
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,true}, var::Variable)
+function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,VECTOR_TYPE}, var::Variable)
     push!(var.value, cmdline_arg)
     nothing
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,false}, var::Variable)
+function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,SCALAR_TYPE}, var::Variable)
     var.value = cmdline_arg
     nothing
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,true}, var::Variable{T, Vector}) where T
+function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,VECTOR_TYPE}, var::Variable{T, Vector}) where T
     value = parse(T, cmdline_arg)
     push!(var.value, value)
     nothing
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,false}, var::Variable) where T
+function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,SCALAR_TYPE}, var::Variable) where T
     var.value = parse(T, cmdline_arg)
     nothing
 end
@@ -180,7 +197,7 @@ function parse_optional_arg(parser, args, arg_vars, required_args, cmdline_arg_s
     return cmdline_arg_state
 end
 
-function process_zero_arg_flag(argument::Argument{T,true}, dest_variable, args, cmdline_state) where T
+function process_zero_arg_flag(argument::Argument{T,VECTOR_TYPE}, dest_variable, args, cmdline_state) where T
     action = argument.action
 
     if action === :append_const
@@ -201,6 +218,8 @@ function process_zero_arg_flag(argument, dest_variable, args, cmdline_state)
         dest_variable.value = false
     elseif action === :store_const
         dest_variable.value = argument.constant
+    elseif action === :count
+        dest_variable.value += 1
     else
         throw(ArgumentError("Unexpected action: $action"))
     end
@@ -216,7 +235,7 @@ function process_one_arg_flag(argument, dest_variable, args, cmdline_state) wher
     return iterate(args, cmdline_state)
 end
 
-function process_multi_arg_flag(argument::Argument{T,true}, nargs::Integer, dest_variable, args, cmdline_state) where T
+function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Integer, dest_variable, args, cmdline_state) where T
     for i = 1:nargs
         flag_value, cmdline_state = iterate(args, cmdline_state)
         flag_value === nothing && return (flag_value, cmdline_state)
@@ -226,7 +245,7 @@ function process_multi_arg_flag(argument::Argument{T,true}, nargs::Integer, dest
     return iterate(args, cmdline_state)
 end
 
-function process_multi_arg_flag(argument::Argument{T,true}, nargs::Char, dest_variable, args, cmdline_state) where T
+function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Char, dest_variable, args, cmdline_state) where T
     !(nargs in ['+','*']) && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
 
     arg_count = 0
@@ -246,7 +265,7 @@ function process_multi_arg_flag(argument::Argument{T,true}, nargs::Char, dest_va
     return (flag_value, cmdline_state)
 end
 
-function process_multi_arg_flag(argument::Argument{T,false}, nargs::Char, dest_variable, args, cmdline_state) where T
+function process_multi_arg_flag(argument::Argument{T,SCALAR_TYPE}, nargs::Char, dest_variable, args, cmdline_state) where T
     nargs !== '?' && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
 
     flag_value, cmdline_state = iterate(args, cmdline_state)

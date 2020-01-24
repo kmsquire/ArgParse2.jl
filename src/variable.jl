@@ -1,4 +1,4 @@
-mutable struct Variable{T, U<:Union{Vector{T}, Optional{T}}}
+mutable struct Variable{T, U<:Union{Vector{T}, Optional{T}, T}}
     value::U
     default_value::U
 end
@@ -18,6 +18,11 @@ function empty_var(arg::Argument{T, V}) where {T,V}
     if dest_is_vector
         default = arg.default !== nothing ? arg.default : T[]
         return Variable{T, Vector{T}}(T[], default)
+    end
+
+    if arg.action === :count
+        default = arg.default !== nothing ? arg.default : 0
+        return Variable{T, T}(arg.default, arg.default)
     end
 
     return Variable{T,Optional{T}}(nothing, arg.default)
