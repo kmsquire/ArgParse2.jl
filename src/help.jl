@@ -1,7 +1,6 @@
 const NAME_FLAG_WIDTH = 12
 
 function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteractive())
-    prog = something(parser.prog, cmdline_name)
     show_usage(io, parser)
     print(io, '\n')
 
@@ -15,7 +14,7 @@ function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteracti
 
         for arg in parser.positional_args
             help = something(arg.help, "$(arg.name) help")
-            print_arg_help(arg.name, help)
+            print_arg_help(io, arg.name, help)
         end
 
         print(io, '\n')
@@ -25,7 +24,7 @@ function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteracti
         print(io, "Optional arguments:\n")
 
         for arg in parser.optional_args
-            flags = format_flags(arg, arg.nargs)
+            flags = format_flags(arg)
             help = something(arg.help, "$(arg.name) help")
             print_arg_help(io, flags, help)
         end
@@ -48,7 +47,13 @@ function show_usage(io::IO, parser::ArgumentParser)
     else
         cmdline_name = length(ARGS) > 0 ? ARGS[1] : "PROGRAM"
         prog = something(parser.prog, cmdline_name)
-        print(io, "Usage: $prog [options]\n")
+        options_str = join((format_flag(arg) for arg in parser.optional_args), ' ')
+        params_str = join((format_arg_name(arg, to_uppercase=false) for arg in parser.positional_args), ' ')
+
+        print(io, "Usage: $prog")
+        !isempty(options_str) && print(io, " $options_str")
+        !isempty(params_str) && print(io, " $params_str")
+        print(io, '\n')
     end
 end
 
@@ -73,26 +78,32 @@ end
 show_help(parser::ArgumentParser; exit_when_done::Bool = !isinteractive()) =
     show_help(stdout::IO, parser, exit_when_done=exit_when_done)
 
-function format_flags(arg::Argument, nargs)
-    nargs = args.nargs
-    nargs === 0 && return join(arg.flags, ", ")
-
-    flag_arg = something(arg.metavar, uppercase(arg.name))
-
-    return join([format_flag(flag, nargs, flag_arg) for flag in arg.flags], ", ")
+function format_flags(arg::Argument)
+    arg.nargs === 0 && return join(arg.flags, ", ")
+    return join([format_flag(flag, arg.nargs, arg_name(arg), arg.required) for flag in arg.flags], ", ")
 end
 
-function format_flag(flag, nargs, flag_arg=nothing)
+format_flag(arg::Argument) = format_flag(arg.default_flag, arg.nargs, arg_name(arg), arg.required)
+
+function format_flag(flag, nargs, arg_name, required)
     nargs === 0 && return flag
+    flag_name_str = format_arg_name(arg_name, nargs, required)
+    return "$flag $flag_name_str"
+end
 
-    if nargs isa Integer
-        flag_args = join(fill(flag_arg, arg.nargs), " ")
-        return "$flag $flag_args"
-    end
+format_arg_name(arg::Argument, to_uppercase::Bool=true) =
+    format_arg_name(arg_name(arg, to_uppercase), arg.nargs, args.required)
 
-    arg.nargs === '?' && return "$flag [$flag_arg]"
-    arg.nargs === '*' && return "$flag [$flag_arg [$flag_arg ...]]"
-    arg.nargs === '+' && return "$flag $flag_arg [$flag_arg ...]"
+function format_arg_name(name, nargs::Integer, required)
+    required && return join(fill(name, nargs), " ")
+    return "[$(join(fill(name, nargs), " "))]"
+end
+
+function format_arg_name(name, nargs, required)
+    nargs === :? && return "[$name]"
+    nargs === :* && return "[$name [$name ...]]"
+    nargs === :+ && return "$name [$name ...]"
 
     throw(ArgumentError("Unexpected value for nargs: $(nargs)"))
 end
+

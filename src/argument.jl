@@ -208,3 +208,8 @@ get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
 get_nargs(nargs::Nothing, ::Type{Vector}, action) = :*
 get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
 get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
+
+function arg_name(arg::Argument, to_uppercase = true)
+    name = to_uppercase ? uppercase(arg.name) : arg.name
+    return something(arg.metavar, name)
+end
