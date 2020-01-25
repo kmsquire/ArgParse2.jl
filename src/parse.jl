@@ -1,5 +1,5 @@
 function parse_args(parser::ArgumentParser, args = ARGS)
-    args = split_char_args(args)
+    args = simplify_args(args)
 
     pos_arg_state = iterate(parser.positional_args)
     cmdline_arg_state = iterate(args)
@@ -23,7 +23,7 @@ function parse_args(parser::ArgumentParser, args = ARGS)
     return collect_arg_values(arg_vars)
 end
 
-function split_char_args(args)
+function simplify_args(args)
     new_args = String[]
     for arg in args
         dash_count, remainder = remove_dashes(arg)
@@ -31,6 +31,9 @@ function split_char_args(args)
             for c in remainder
                 push!(new_args, "-$c")
             end
+        elseif dash_count == 2 && occursin('=', arg)
+            split_args = split(arg, '=', limit = 2)
+            push!(new_args, split_args...)
         else
             push!(new_args, arg)
         end
