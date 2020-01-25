@@ -5,19 +5,19 @@ function parse_args(parser::ArgumentParser, args = ARGS)
     cmdline_arg_state = iterate(args)
 
     arg_vars = init_arg_variables(parser)
-    required_args = get_required_args(parser)
+    unseen_req_args = get_required_args(parser)
 
     while cmdline_arg_state !== nothing
         cmdline_arg = cmdline_arg_state[1]
         if is_flag(cmdline_arg)
-            cmdline_arg_state = parse_optional_arg(parser, args, arg_vars, required_args, cmdline_arg_state)
+            cmdline_arg_state = parse_optional_arg(parser, args, arg_vars, unseen_req_args, cmdline_arg_state)
         else
-            pos_arg_state, cmdline_arg_state = parse_positional_arg(parser, args, arg_vars, required_args, pos_arg_state, cmdline_arg_state)
+            pos_arg_state, cmdline_arg_state = parse_positional_arg(parser, args, arg_vars, unseen_req_args, pos_arg_state, cmdline_arg_state)
         end
     end
 
-    if !isempty(required_args)
-        throw(ArgumentError("the following arguments are required: $(join(required_args, ", "))"))
+    if !isempty(unseen_req_args)
+        throw(ArgumentError("the following arguments are required: $(join(unseen_req_args, ", "))"))
     end
 
     return collect_arg_values(arg_vars)
@@ -65,21 +65,21 @@ function init_arg_variable(arg, current_arg_var)
 end
 
 function get_required_args(parser::ArgumentParser)
-    required_args = OrderedSet{String}()
+    unseen_req_args = OrderedSet{String}()
     for arg in parser.positional_args
-        push!(required_args, arg.name)
+        push!(unseen_req_args, arg.name)
     end
 
     for arg in parser.optional_args
-        arg.required && push!(required, arg.default_flag)
+        arg.required && push!(unseen_req_args, arg.default_flag)
     end
 
-    return required_args
+    return unseen_req_args
 end
 
 is_flag(arg::AbstractString) = startswith(arg, '-')
 
-function parse_positional_arg(parser, args, arg_vars, required_args, pos_arg_state, cmdline_arg_state)
+function parse_positional_arg(parser, args, arg_vars, unseen_req_args, pos_arg_state, cmdline_arg_state)
     pos_arg_state === nothing && throw(ArgumentError("Found a positional argument, but no place to put it!"))
 
     argument, positional_state = pos_arg_state
@@ -89,8 +89,8 @@ function parse_positional_arg(parser, args, arg_vars, required_args, pos_arg_sta
 
     parse_cmdline_arg(cmdline_value, argument, var)
 
-    if argument.name in required_args
-        pop!(required_args, argument.name)
+    if argument.name in unseen_req_args
+        pop!(unseen_req_args, argument.name)
     end
 
     pos_arg_state = advance(argument.nargs, var, parser.positional_args, argument, positional_state)
@@ -140,7 +140,7 @@ function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,SCALAR_T
     nothing
 end
 
-function parse_optional_arg(parser, args, arg_vars, required_args, cmdline_arg_state)
+function parse_optional_arg(parser, args, arg_vars, unseen_req_args, cmdline_arg_state)
     cmdline_flag, cmdline_state = cmdline_arg_state
     argument = parser.flag_args[cmdline_flag]
 
@@ -155,8 +155,8 @@ function parse_optional_arg(parser, args, arg_vars, required_args, cmdline_arg_s
         cmdline_arg_state = process_multi_arg_flag(argument, dest_variable, args, cmdline_state)
     end
 
-    if argument.required && argument.name in required_args
-        pop!(required_args, argument.name)
+    if argument.required && argument.name in unseen_req_args
+        pop!(unseen_req_args, argument.name)
     end
 
     return cmdline_arg_state
