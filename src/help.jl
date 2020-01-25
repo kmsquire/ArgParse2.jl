@@ -1,12 +1,12 @@
 const NAME_FLAG_WIDTH = 12
+const ARG_HELP_INDENT = NAME_FLAG_WIDTH + 2
 
 function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteractive())
     show_usage(io, parser)
-    print(io, '\n')
+    println(io)
 
     if parser.description !== nothing
-        print(io, parser.description)
-        print(io, '\n')
+        println_wrapped(io, parser.description)
     end
 
     if !isempty(parser.positional_args)
@@ -17,7 +17,7 @@ function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteracti
             print_arg_help(io, arg.name, help)
         end
 
-        print(io, '\n')
+        println(io)
     end
 
     if !isempty(parser.optional_args)
@@ -29,12 +29,11 @@ function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteracti
             print_arg_help(io, flags, help)
         end
 
-        print(io, '\n')
+        println(io)
     end
 
     if parser.epilog !== nothing
-        print(io, parser.epilog)
-        print(io, '\n')
+        println_wrapped(io, parser.epilog)
     end
 
     exit_when_done && exit(0)
@@ -43,40 +42,40 @@ end
 
 function show_usage(io::IO, parser::ArgumentParser)
     if parser.usage !== nothing
-        print(io, "Usage: $(parser.usage)\n")
+        println_wrapped(io, "Usage: $(parser.usage)\n"; subsequent_indent = ARG_HELP_INDENT, break_long_words = false)
     else
         cmdline_name = length(ARGS) > 0 ? ARGS[1] : "PROGRAM"
         prog = something(parser.prog, cmdline_name)
         options_str = join((format_flag(arg) for arg in parser.optional_args), ' ')
-        params_str = join((format_arg_name(arg, to_uppercase=false) for arg in parser.positional_args), ' ')
+        params_str = join((format_arg_name(arg, false) for arg in parser.positional_args), ' ')
 
-        print(io, "Usage: $prog")
-        !isempty(options_str) && print(io, " $options_str")
-        !isempty(params_str) && print(io, " $params_str")
-        print(io, '\n')
+
+        println_wrapped(io, "Usage: $prog $options_str $params_str"; subsequent_indent = ARG_HELP_INDENT, break_long_words = false)
     end
 end
 
 show_usage(parser::ArgumentParser) = show_usage(stdout::IO, parser)
 
 function print_arg_help(io, name_or_flags::AbstractString, help::AbstractString)
-    print(io, ' ')
-    print(io, name_or_flags)
-
     if length(name_or_flags) < NAME_FLAG_WIDTH
-        pad = NAME_FLAG_WIDTH - length(name_or_flags)
-        print(io, ' '^pad)
-    else
-        print(io, '\n')
-        print(io, ' '^(NAME_FLAG_WIDTH + 2))
-    end
+        pad = ARG_HELP_INDENT - length(name_or_flags) - 1  # the -1 at the end is for the initial space
+        print(io, ' ', name_or_flags, ' '^pad)
 
-    print(io, help)
-    print(io, '\n')
+        wrapped_help = wrap(help;
+            initial_indent = ARG_HELP_INDENT,
+            subsequent_indent = ARG_HELP_INDENT,) |> lstrip
+        println(io, help)
+    else
+        println(io, ' ', name_or_flags)
+        println_wrapped(io,
+            help;
+            initial_indent = ARG_HELP_INDENT,
+            subsequent_indent = ARG_HELP_INDENT,)
+    end
 end
 
 show_help(parser::ArgumentParser; exit_when_done::Bool = !isinteractive()) =
-    show_help(stdout::IO, parser, exit_when_done=exit_when_done)
+    show_help(stdout::IO, parser, exit_when_done = exit_when_done)
 
 function format_flags(arg::Argument)
     arg.nargs === 0 && return join(arg.flags, ", ")
@@ -91,8 +90,8 @@ function format_flag(flag, nargs, arg_name, required)
     return "$flag $flag_name_str"
 end
 
-format_arg_name(arg::Argument, to_uppercase::Bool=true) =
-    format_arg_name(arg_name(arg, to_uppercase), arg.nargs, args.required)
+format_arg_name(arg::Argument, to_uppercase::Bool = true) =
+    format_arg_name(arg_name(arg, to_uppercase), arg.nargs, arg.required)
 
 function format_arg_name(name, nargs::Integer, required)
     required && return join(fill(name, nargs), " ")
