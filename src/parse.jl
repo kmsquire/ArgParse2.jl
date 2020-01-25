@@ -142,7 +142,7 @@ end
 
 function parse_optional_arg(parser, args, arg_vars, required_args, cmdline_arg_state)
     cmdline_flag, cmdline_state = cmdline_arg_state
-    argument = parser._flag_args[cmdline_flag]
+    argument = parser.flag_args[cmdline_flag]
 
     dest_variable = arg_vars[argument.dest]
     nargs = argument.nargs
