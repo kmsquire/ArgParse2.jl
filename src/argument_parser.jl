@@ -6,6 +6,7 @@ struct ArgumentParser
     positional_args::Vector{Argument}
     optional_args::Vector{Argument}
     flag_args::LittleDict{String,Argument}
+    has_numeric_flags::Ref{Bool}
 end
 
 function ArgumentParser(;
@@ -17,8 +18,9 @@ function ArgumentParser(;
     positional_args = Argument[]
     optional_args = Argument[]
     flag_args = LittleDict{String,Argument}()
+    has_numeric_flags = Ref{Bool}(false)
 
-    parser = ArgumentParser(prog, usage, description, epilog, positional_args, optional_args, flag_args)
+    parser = ArgumentParser(prog, usage, description, epilog, positional_args, optional_args, flag_args, has_numeric_flags)
 
     return parser
 end
@@ -38,6 +40,9 @@ function add_argument(parser::ArgumentParser, name_or_flags::String...; kwargs..
         for flag in arg.flags
             flag in keys(parser.flag_args) && throw(ArgumentError("flag `$flag` defined multiple times"))
             parser.flag_args[flag] = arg
+            if is_numeric(flag)
+                parser.has_numeric_flags[] = true
+            end
         end
         push!(parser.optional_args, arg)
     end
