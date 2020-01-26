@@ -127,7 +127,39 @@ end
         isoceles triangles in the wild.
         """
     end
+end
 
+@testset "Miscellaneous" begin
+    @testset "Arguments with '-' (1)" begin
+        parser = ArgumentParser(prog="PROG")
+        add_argument = argument_adder(parser)
+
+        add_argument("-x")
+        add_argument("foo", nargs='?')
+
+        # no negative number options, so -1 is a positional argument
+        @test parse_args(parser, ["-x", "-1"]) === (foo=nothing, x="-1")
+
+        # no negative number options, so -1 and -5 are positional arguments
+        @test parse_args(parser, ["-x", "-1", "-5"]) === (foo="-5", x="-1")
+
+    end
+
+    @testset "Arguments with '-' (2)" begin
+        parser = ArgumentParser(prog="PROG")
+        add_argument = argument_adder(parser)
+        add_argument("-1", dest="one")
+        add_argument("foo", nargs='?')
+
+        # negative number options present, so -1 is an option
+        @test parse_args(parser, ["-1", "X"]) === (foo=nothing, one="X")
+
+        # negative number options present, so -2 is an option
+        @test_throws KeyError parse_args(parser, ["-2"])
+
+        # negative number options present, so both -1s are options
+        @test_throws ArgumentError parse_args(parser, ["-1", "-1"])
+    end
 end
 
 nothing
