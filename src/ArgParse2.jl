@@ -1,7 +1,7 @@
 module ArgParse2
 
 using Base: @kwdef
-using OrderedCollections: LittleDict, OrderedSet
+using OrderedCollections: LittleDict
 
 export ArgumentParser, add_argument, argument_adder, parse_args
 

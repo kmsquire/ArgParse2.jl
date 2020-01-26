@@ -65,9 +65,9 @@ function init_arg_variable(arg, current_arg_var)
 end
 
 function get_required_args(parser::ArgumentParser)
-    unseen_req_args = OrderedSet{String}()
+    unseen_req_args = String[]
     for arg in parser.positional_args
-        push!(unseen_req_args, arg.name)
+        arg.required && push!(unseen_req_args, arg.name)
     end
 
     for arg in parser.optional_args
@@ -89,8 +89,9 @@ function parse_positional_arg(parser, args, arg_vars, unseen_req_args, pos_arg_s
 
     parse_cmdline_arg(cmdline_value, argument, var)
 
-    if argument.name in unseen_req_args
-        pop!(unseen_req_args, argument.name)
+    if argument.required
+        idx = findfirst(==(argument.name), unseen_req_args)
+        idx !== nothing && deleteat!(unseen_req_args, idx)
     end
 
     pos_arg_state = advance(argument.nargs, var, parser.positional_args, argument, positional_state)
@@ -155,8 +156,9 @@ function parse_optional_arg(parser, args, arg_vars, unseen_req_args, cmdline_arg
         cmdline_arg_state = process_multi_arg_flag(argument, dest_variable, args, cmdline_state)
     end
 
-    if argument.required && argument.name in unseen_req_args
-        pop!(unseen_req_args, argument.name)
+    if argument.required
+        idx = findfirst(==(argument.default_flag), unseen_req_args)
+        idx !== nothing && deleteat!(unseen_req_args, idx)
     end
 
     return cmdline_arg_state
