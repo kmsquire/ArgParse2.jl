@@ -101,6 +101,16 @@ end
 
         @test parse_args(parser, ["-vvv"]) === (verbose = 3,)
     end
+
+    @testset "Types" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+
+        add_argument("foo", type=Char)
+
+        @test parse_args(parser, ["a"]) === (foo='a',)
+        @test_throws ArgumentError parse_args(parser, ["abc"])
+    end
 end
 
 @testset "Help" begin
@@ -316,7 +326,7 @@ end
         end
     end
 
-    @testset "Errors" begin
+    @testset "Construction Errors" begin
         parser = ArgumentParser()
         add_argument = argument_adder(parser)
         @test_throws ArgumentError add_argument("---foo")
@@ -337,8 +347,6 @@ end
 
         @test_throws ArgumentError add_argument("-a", action="nothing")
 
-
-        parser = ArgumentParser()
     end
 end
 
