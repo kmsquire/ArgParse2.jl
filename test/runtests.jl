@@ -1,8 +1,22 @@
 using ArgParse2
 using Test
 
+function Base.redirect_stdout(f::Function, buf::Base.GenericIOBuffer)
+    old_stdout = stdout
+    try
+        rd, = redirect_stdout()
+        ret = f()
+        Libc.flush_cstdio()
+        flush(stdout)
+        write(buf, readavailable(rd))
+        return ret
+    finally
+        redirect_stdout(old_stdout)
+    end
+end
+
 @testset "Smoke Test" begin
-    parser = ArgumentParser(prog = "PROG")
+    parser = ArgumentParser(prog = "PROG", description="Smoke Test", epilog="Just testing smoke")
     add_argument = argument_adder(parser)
 
     add_argument("-f", "--foo")
@@ -11,6 +25,13 @@ using Test
     @test parse_args(parser, ["BAR"]) === (bar = "BAR", foo = nothing)
     @test parse_args(parser, ["BAR", "--foo", "FOO"]) === (bar = "BAR", foo = "FOO")
     @test_throws ArgumentError parse_args(parser, ["--foo", "FOO"])
+
+    io = IOBuffer()
+
+    redirect_stdout(io) do
+        show_help(parser, exit_when_done=false)
+        show_usage(parser)
+    end
 end
 
 @testset "Action" begin
