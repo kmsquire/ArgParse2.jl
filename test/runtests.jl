@@ -283,6 +283,17 @@ end
             @test parse_args(parser, ["a", "-f", "-1"]) == (bar=["a"], foo=["-1"],)
             @test parse_args(parser, ["a", "b", "c", "-f", "-1", "-2"]) == (bar=["a", "b", "c"], foo=["-1", "-2"],)
         end
+
+        @testset "?*" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("foo", nargs="?")
+            add_argument("bar", nargs="*")
+
+            @test parse_args(parser, []) == (foo=nothing, bar=[])
+            @test parse_args(parser, ["a"]) == (foo="a", bar=[])
+            @test parse_args(parser, ["a", "b", "c"]) == (foo="a", bar=["b", "c"])
+        end
     end
 
     @testset "Choices" begin
