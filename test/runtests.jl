@@ -24,6 +24,7 @@ end
 
     @test parse_args(parser, ["BAR"]) === (bar = "BAR", foo = nothing)
     @test parse_args(parser, ["BAR", "--foo", "FOO"]) === (bar = "BAR", foo = "FOO")
+    @test parse_args(parser, ["BAR", "--foo=FOO"]) === (bar = "BAR", foo = "FOO")
     @test_throws ArgumentError parse_args(parser, ["--foo", "FOO"])
 
     io = IOBuffer()
