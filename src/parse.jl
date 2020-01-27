@@ -91,57 +91,57 @@ function parse_positional_arg(parser, args, arg_vars, unseen_req_args, pos_arg_s
 
     var = arg_vars[argument.dest]
 
-    parse_cmdline_arg(cmdline_value, argument, var)
+    parse_cmdline_arg(cmdline_value, var, argument.choices, argument.name)
 
     if argument.required
         idx = findfirst(==(argument.name), unseen_req_args)
         idx !== nothing && deleteat!(unseen_req_args, idx)
     end
 
-    pos_arg_state = advance(argument.nargs, var, parser.positional_args, argument, positional_state)
+    pos_arg_state = iterate_positional_args(argument.nargs, var, parser.positional_args, argument, positional_state)
     cmdline_arg_state = iterate(args, cmdline_state)
 
     return pos_arg_state, cmdline_arg_state
 end
 
-function advance(nargs::Integer, var::Variable{T,Vector}, positional_args, argument, positional_state) where T
+function iterate_positional_args(nargs::Integer, var::Variable{T,Vector{T}}, positional_args, argument, positional_state) where T
     length(var.value) < nargs && return (argument, positional_state)
     return iterate(positional_args, positional_state)
 end
 
-function advance(nargs::Integer, var, positional_args, argument, positional_state)
+function iterate_positional_args(nargs::Integer, var, positional_args, argument, positional_state)
     nargs > 1 && throw(ArgumentError("Unexpected nargs value ('$nargs') when parsing $(argument.name)"))
     return iterate(positional_args, positional_state)
 end
 
-function advance(nargs::Symbol, var::Variable{T,Vector}, positional_args, argument, positional_state) where T
-    nargs in [:+, :*] && return (argument, positional_state)
-    return iterate(positional_args, positional_state)
+function iterate_positional_args(nargs::Symbol, var::Variable{T,Vector{T}}, positional_args, argument, positional_state) where T
+    !(nargs in [:+, :*]) && throw(ArgumentError("Unexpected nargs value ('$nargs') when parsing $(argument.name)"))
+    return (argument, positional_state)
 end
 
-function advance(nargs::Symbol, var, positional_args, argument, positional_state)
+function iterate_positional_args(nargs::Symbol, var, positional_args, argument, positional_state)
     nargs in [:+, :*] && throw(ArgumentError("Unexpected nargs value ('$nargs') when parsing $(argument.name)"))
     return iterate(positional_args, positional_state)
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,VECTOR_TYPE}, var::Variable)
-    push!(var.value, cmdline_arg)
-    nothing
+parse_item(::Type{T}, str::AbstractString, name) where T <: Number = parse(T, str)
+parse_item(::Type{<:AbstractString}, str::AbstractString, name) = str
+
+function parse_item(::Type{<:AbstractChar}, str::AbstractString, name)
+    if length(str) !== 1
+        throw(ArgumentError("Argument for $(name) must be a single character"))
+    end
+    return str[1]
 end
 
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{<:AbstractString,SCALAR_TYPE}, var::Variable)
-    var.value = cmdline_arg
-    nothing
-end
-
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,VECTOR_TYPE}, var::Variable{T,Vector}) where T
-    value = parse(T, cmdline_arg)
-    push!(var.value, value)
-    nothing
-end
-
-function parse_cmdline_arg(cmdline_arg::AbstractString, arg::Argument{T,SCALAR_TYPE}, var::Variable) where T
-    var.value = parse(T, cmdline_arg)
+function parse_cmdline_arg(cmdline_arg::AbstractString, var::Variable{T}, choices, name) where T
+    value = parse_item(T, cmdline_arg, name)
+    if choices !== nothing
+        if !(value in choices)
+            throw(ArgumentError("$name must be one of $choices"))
+        end
+    end
+    set_value(var, value)
     nothing
 end
 
@@ -160,10 +160,10 @@ function parse_optional_arg(parser, args, arg_vars, unseen_req_args, cmdline_arg
             cmdline_flag,
             cmdline_state)
     else
-        cmdline_arg_state = process_flag(argument,
-            nargs,
+        cmdline_arg_state = process_flag(nargs,
             dest_variable,
             args,
+            argument.choices,
             cmdline_flag,
             cmdline_state,
             parser.has_numeric_flags[])
@@ -179,15 +179,15 @@ end
 
 function process_zero_arg_flag(argument, action, dest_variable, args, cmdline_flag, cmdline_state)
     if action === :store_true
-        dest_variable.value = true
+        set_value(dest_variable, true)
     elseif action === :store_false
-        dest_variable.value = false
+        set_value(dest_variable, false)
     elseif action === :store_const
-        dest_variable.value = argument.constant
+        set_value(dest_variable, argument.constant)
     elseif action === :append_const
-        push!(dest_variable.value, argument.constant)
+        set_value(dest_variable, argument.constant)
     elseif action === :count
-        dest_variable.value += 1
+        set_value(dest_variable, get_value(dest_variable) + 1)
     else
         throw(ArgumentError("Unexpected action '$action' for $cmdline_flag"))
     end
@@ -195,7 +195,7 @@ function process_zero_arg_flag(argument, action, dest_variable, args, cmdline_fl
     return iterate(args, cmdline_state)
 end
 
-function process_flag(argument, nargs, dest_variable, args, cmdline_flag, cmdline_state, parser_has_numeric_flags)
+function process_flag(nargs, dest_variable, args, choices, cmdline_flag, cmdline_state, parser_has_numeric_flags)
     arg_count = 0
 
     flag_state = iterate(args, cmdline_state)
@@ -203,7 +203,7 @@ function process_flag(argument, nargs, dest_variable, args, cmdline_flag, cmdlin
         flag_value, cmdline_state = flag_state
         is_flag(flag_value, parser_has_numeric_flags) && break
 
-        parse_cmdline_arg(flag_value, argument, dest_variable)
+        parse_cmdline_arg(flag_value, dest_variable, choices, cmdline_flag)
         arg_count += 1
 
         flag_state = iterate(args, cmdline_state)

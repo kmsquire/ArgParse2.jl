@@ -14,13 +14,22 @@ using Test
 end
 
 @testset "Action" begin
-    @testset "Store" begin
+    @testset "Store1" begin
         parser = ArgumentParser()
         add_argument = argument_adder(parser)
 
         add_argument("--foo")
 
         @test parse_args(parser, split("--foo 1")) === (foo="1",)
+    end
+
+    @testset "Store2" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+        add_argument("bar", nargs=2, type=Char)
+        add_argument("--foo", nargs=2)
+
+        @test parse_args(parser, split("a b --foo d e")) == (bar = ['a', 'b'], foo = ["d", "e"])
     end
 
     @testset "Store Constant" begin
