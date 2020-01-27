@@ -102,7 +102,7 @@ end
     end
 end
 
-@testset "Test Help" begin
+@testset "Help" begin
     @testset "No help" begin
         parser = ArgumentParser(add_help = false)
         io = IOBuffer()
@@ -245,6 +245,30 @@ end
             @test parse_args(parser, ["a", "-f", "-1"]) == (bar=["a"], foo=["-1"],)
             @test parse_args(parser, ["a", "b", "c", "-f", "-1", "-2"]) == (bar=["a", "b", "c"], foo=["-1", "-2"],)
         end
+    end
+
+    @testset "Errors" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+        @test_throws ArgumentError add_argument("---foo")
+        @test_throws ArgumentError add_argument("-f", nargs="=")
+
+        @test_throws ArgumentError add_argument("-t", action="store_true", nargs=1)
+        @test_throws ArgumentError add_argument("-f", action="store_false", nargs=1)
+        @test_throws ArgumentError add_argument("-c", action="store_const", nargs=1, constant=1)
+        @test_throws ArgumentError add_argument("-a", action="append_const", nargs=1, constant=1)
+        @test_throws ArgumentError add_argument("-c", action="count", nargs=1)
+
+        @test_throws ArgumentError add_argument("-c", action="store_const")
+        @test_throws ArgumentError add_argument("-c", action="append_const")
+
+        @test_throws ArgumentError add_argument("-a", nargs="*", default="aaa")
+        @test_throws ArgumentError add_argument("-c", choices=["a","b"], default="c")
+
+        @test_throws ArgumentError add_argument("-a", action="nothing")
+
+
+        parser = ArgumentParser()
     end
 end
 
