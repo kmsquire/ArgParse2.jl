@@ -157,6 +157,34 @@ end
 
         @test output == "Usage: PROG [options]"
     end
+
+    @testset "Multiple Arguments" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+        add_argument("foo", nargs=2)
+        add_argument("-b", nargs="?")
+        add_argument("-a", nargs="*")
+        add_argument("-r", nargs="+")
+
+        io = IOBuffer()
+        show_help(io, parser, exit_when_done=false)
+        output=String(take!(io)) |> rstrip
+
+        @test output == rstrip("""
+        Usage: PROGRAM --help -b [B] -a [A [A ...]] -r R [R ...] foo foo
+
+        Positional arguments:
+         foo          foo help
+
+        Optional arguments:
+         -h, --help   show this help message and exit
+         -b [B]       b help
+         -a [A [A ...]]
+                      a help
+         -r R [R ...]
+                      r help
+        """)
+    end
 end
 
 @testset "Arguments" begin
@@ -273,6 +301,7 @@ end
 
         @test_throws ArgumentError add_argument("-a", nargs="*", default="aaa")
         @test_throws ArgumentError add_argument("-c", choices=["a","b"], default="c")
+        @test_throws ArgumentError add_argument("-c", choices=["a","b"], default=["c"])
 
         @test_throws ArgumentError add_argument("-a", action="nothing")
 
