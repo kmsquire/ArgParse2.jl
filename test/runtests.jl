@@ -148,6 +148,15 @@ end
         isoceles triangles in the wild.
         """
     end
+
+    @testset "Usage" begin
+        parser = ArgumentParser(usage = "PROG [options]", add_help=false)
+        io = IOBuffer()
+        show_usage(io, parser)
+        output = String(take!(io)) |> rstrip
+
+        @test output == "Usage: PROG [options]"
+    end
 end
 
 @testset "Arguments" begin
