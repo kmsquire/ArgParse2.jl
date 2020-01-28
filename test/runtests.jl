@@ -284,6 +284,26 @@ end
         end
     end
 
+    @testset "Choices" begin
+        @testset "Array" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("move", choices=["rock", "paper", "scissors"])
+
+            @test parse_args(parser, ["rock"]) === (move="rock",)
+            @test_throws ArgumentError parse_args(parser, ["fire"])
+        end
+
+        @testset "Range" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("count", choices=1:3)
+
+            @test parse_args(parser, ["1"]) === (count=1,)
+            @test_throws ArgumentError parse_args(parser, ["4"])
+        end
+    end
+
     @testset "Errors" begin
         parser = ArgumentParser()
         add_argument = argument_adder(parser)
