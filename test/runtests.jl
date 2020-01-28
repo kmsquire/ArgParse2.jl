@@ -375,7 +375,8 @@ end
     @test_throws ArgumentError add_argument("-a", action="nothing")
 end
 
-    end
+@testset "Misc Errors" begin
+    @test_throws ArgumentError ArgParse2.format_arg_name("name", :(=), true)
 end
 
 nothing
