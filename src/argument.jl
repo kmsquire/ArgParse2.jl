@@ -124,11 +124,11 @@ end
 function coalesce_promote_types(types::DataType...)
     length(types) === 0 && return String
 
-    ret_type = types[1]
+    ret_type = Nothing
 
-    for type in types[2:end]
+    for type in types
         if type !== Nothing
-            ret_type = promote_type(ret_type, type)
+            ret_type = ret_type === Nothing ? type : promote_type(ret_type, type)
         end
     end
 
