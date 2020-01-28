@@ -113,13 +113,13 @@ function advance(nargs::Integer, var, positional_args, argument, positional_stat
     return iterate(positional_args, positional_state)
 end
 
-function advance(nargs::Char, var::Variable{T,Vector}, positional_args, argument, positional_state) where T
-    nargs in ['+', '*'] && return (argument, positional_state)
+function advance(nargs::Symbol, var::Variable{T,Vector}, positional_args, argument, positional_state) where T
+    nargs in [:+, :*] && return (argument, positional_state)
     return iterate(positional_args, positional_state)
 end
 
-function advance(nargs::Char, var, positional_args, argument, positional_state)
-    nargs in ['+', '*'] && throw(ArgumentError("Unexpected nargs value ('$nargs') when parsing $(argument.name)"))
+function advance(nargs::Symbol, var, positional_args, argument, positional_state)
+    nargs in [:+, :*] && throw(ArgumentError("Unexpected nargs value ('$nargs') when parsing $(argument.name)"))
     return iterate(positional_args, positional_state)
 end
 
@@ -216,7 +216,7 @@ function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Intege
 end
 
 function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Char, dest_variable, args, cmdline_state) where T
-    !(nargs in ['+','*']) && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
+    !(nargs in [:+,:*]) && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
 
     arg_count = 0
     flag_value = nothing
@@ -228,7 +228,7 @@ function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Char, 
         arg_count += 1
     end
 
-    if nargs === '+' && arg_count === 0
+    if nargs === :+ && arg_count === 0
         throw(ArgumentError("At least one argument expected for flag"))
     end
 
@@ -236,7 +236,7 @@ function process_multi_arg_flag(argument::Argument{T,VECTOR_TYPE}, nargs::Char, 
 end
 
 function process_multi_arg_flag(argument::Argument{T,SCALAR_TYPE}, nargs::Char, dest_variable, args, cmdline_state) where T
-    nargs !== '?' && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
+    nargs !== :? && throw(ArgumentError("Unexpected value for nargs: '$nargs'"))
 
     flag_value, cmdline_state = iterate(args, cmdline_state)
     flag_value === nothing && return (flag_value, cmdline_state)

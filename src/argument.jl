@@ -2,7 +2,7 @@
 @kwdef struct Argument{T,U,V}
     name::String
     flags::Vector{String}
-    nargs::Union{Int,Char}
+    nargs::Union{Int,Symbol}
     default_flag::Optional{String} = nothing
     action::Optional{Symbol} = nothing
     constant::Optional{T} = nothing
@@ -19,7 +19,7 @@ const SCALAR_TYPE = false
 
 function Argument(name_or_flags::Union{Symbol,String}...;
     action::Union{Symbol,String,Nothing} = nothing,
-    nargs::Union{Int,Char,Nothing} = nothing,
+    nargs::Union{Int,Char,String,Nothing} = nothing,
     constant::R = nothing,
     default::Union{Vector{S},S} = nothing,
     type::DataType = Nothing,
@@ -33,8 +33,9 @@ function Argument(name_or_flags::Union{Symbol,String}...;
         dest = name
     end
 
-    action = str_to_symbol(action)
-    dest = str_to_symbol(dest)
+    action = to_symbol(action)
+    dest = to_symbol(dest)
+    nargs = to_symbol(nargs)
 
     validate_action(action)
 
@@ -82,16 +83,17 @@ function Argument(name_or_flags::Union{Symbol,String}...;
         kwargs...)
 end
 
-str_to_symbol(s::AbstractString) = Symbol(s)
-str_to_symbol(s) = s
+
+to_symbol(::Nothing) = nothing
+to_symbol(n::Number) = n
+to_symbol(s) = Symbol(s)
 
 function need_vector(action, nargs, default)
     return action in [:append, :append_const] || multiple_values(nargs) || default isa AbstractVector
 end
 
 multiple_values(nargs::Integer) = nargs > 1
-multiple_values(nargs::Char) = nargs in ['+', '*']
-multiple_values(nargs) = false
+multiple_values(nargs::Symbol) = nargs in [:+, :*]
 
 function parse_name_flags(name_or_flags::Tuple{Vararg{Union{Symbol,String}}})
     if length(name_or_flags) === 1 && Base.isidentifier(name_or_flags[1])
@@ -197,13 +199,13 @@ function validate_action(action::Symbol)
 end
 
 validate_nargs(nargs) = nothing
-function validate_nargs(nargs::Char)
-    if !(nargs in ['?', '+', '*'])
+function validate_nargs(nargs::Symbol)
+    if !(nargs in [:?, :+, :*])
         throw(ArgumentError("Invalid specifier `$nargs` for `nargs`"))
     end
 end
 
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
-get_nargs(nargs::Nothing, ::Type{Vector}, action) = '*'
+get_nargs(nargs::Nothing, ::Type{Vector}, action) = :*
 get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count] ? 0 : 1
-get_nargs(nargs::Union{Int,Char}, _, _) = nargs
+get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
