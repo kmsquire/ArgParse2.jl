@@ -17,7 +17,8 @@ function empty_var(arg::Argument{T, V}) where {T,V}
     dest_is_vector = V
     if dest_is_vector
         default = arg.default !== nothing ? arg.default : T[]
-        return Variable{T, Vector{T}}(T[], default)
+        value = arg.action in [:append, :append_const] ? copy(default) : T[]
+        return Variable{T, Vector{T}}(value, default)
     end
 
     if arg.action === :count
@@ -32,28 +33,24 @@ function promote_var(arg1::Variable{S,V1}, arg2::Variable{T,V2}) where {S, T, V1
     if ((V1 <: AbstractVector && !(V2 <: AbstractVector)) ||
         (V2 <: AbstractVector && !(V1 <: AbstractVector)))
 
-        throw(ArgumentError("Multiple arguments target the same destination variable,\n" +
+        throw(ArgumentError("Multiple arguments target the same destination variable,\n" *
         "but one accepts multiple values, and the other only accepts single values"))
     end
 
     if (arg1.default_value !== nothing && arg2.default_value !== nothing &&
         arg1.default_value != arg2.default_value)
-        throw(ArgumentError("Multiple arguments target the same destination variable,\n" +
+        throw(ArgumentError("Multiple arguments target the same destination variable,\n" *
         "but have different default values(`$(arg1.default_value)` != `$(arg2.default_value)`"))
     end
 
     default_value = something(arg1.default_value, Some(arg2.default_value))
 
+    U = promote_type(S, T)
     dest_is_vector = V1 <: AbstractVector
 
     if dest_is_vector
-        SS = eltype(S)
-        TT = eltype(T)
-        UU = promote_type(SS, TT)
-
-        return Variable{UU, Vector{UU}}(UU[], default_value)
+        return Variable{U, Vector{U}}(U[], default_value)
     end
 
-    U = promote_type(S, T)
     return Variable{U, Optional{U}}(nothing, default_value)
 end
