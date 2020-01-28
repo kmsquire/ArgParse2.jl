@@ -343,26 +343,37 @@ end
         @test_throws ArgumentError parse_args(parser, [])
     end
 
-    @testset "Construction Errors" begin
+    @testset "Required Options" begin
         parser = ArgumentParser()
         add_argument = argument_adder(parser)
-        @test_throws ArgumentError add_argument("---foo")
-        @test_throws ArgumentError add_argument("-f", nargs="=")
+        add_argument("-f", required=true)
 
-        @test_throws ArgumentError add_argument("-t", action="store_true", nargs=1)
-        @test_throws ArgumentError add_argument("-f", action="store_false", nargs=1)
-        @test_throws ArgumentError add_argument("-c", action="store_const", nargs=1, constant=1)
-        @test_throws ArgumentError add_argument("-a", action="append_const", nargs=1, constant=1)
-        @test_throws ArgumentError add_argument("-c", action="count", nargs=1)
+        @test_throws ArgumentError parse_args(parser, [])
+        @test parse_args(parser, ["-f", "foo"]) === (f="foo",)
+    end
+end
 
-        @test_throws ArgumentError add_argument("-c", action="store_const")
-        @test_throws ArgumentError add_argument("-c", action="append_const")
+@testset "Construction Errors" begin
+    parser = ArgumentParser()
+    add_argument = argument_adder(parser)
+    @test_throws ArgumentError add_argument("---foo")
+    @test_throws ArgumentError add_argument("-f", nargs="=")
 
-        @test_throws ArgumentError add_argument("-a", nargs="*", default="aaa")
-        @test_throws ArgumentError add_argument("-c", choices=["a","b"], default="c")
-        @test_throws ArgumentError add_argument("-c", choices=["a","b"], default=["c"])
+    @test_throws ArgumentError add_argument("-t", action="store_true", nargs=1)
+    @test_throws ArgumentError add_argument("-f", action="store_false", nargs=1)
+    @test_throws ArgumentError add_argument("-c", action="store_const", nargs=1, constant=1)
+    @test_throws ArgumentError add_argument("-a", action="append_const", nargs=1, constant=1)
+    @test_throws ArgumentError add_argument("-c", action="count", nargs=1)
 
-        @test_throws ArgumentError add_argument("-a", action="nothing")
+    @test_throws ArgumentError add_argument("-c", action="store_const")
+    @test_throws ArgumentError add_argument("-c", action="append_const")
+
+    @test_throws ArgumentError add_argument("-a", nargs="*", default="aaa")
+    @test_throws ArgumentError add_argument("-c", choices=["a","b"], default="c")
+    @test_throws ArgumentError add_argument("-c", choices=["a","b"], default=["c"])
+
+    @test_throws ArgumentError add_argument("-a", action="nothing")
+end
 
     end
 end
