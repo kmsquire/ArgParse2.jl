@@ -8,3 +8,6 @@ function longest(strs::Vector{String})
     return strs[idx]
 end
 
+function is_numeric(flag::String)
+    return tryparse(Float64, flag) !== nothing
+end

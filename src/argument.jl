@@ -1,39 +1,40 @@
+const VECTOR_TYPE = true
+const SCALAR_TYPE = false
 
-@kwdef struct Argument{T,V}
+@kwdef struct Argument{T,U,V}
     name::String
     flags::Vector{String}
-    nargs::Union{Int,Char}
-    flag::Optional{String} = nothing
+    nargs::Union{Int,Symbol}
+    default_flag::Optional{String} = nothing
     action::Optional{Symbol} = nothing
     constant::Optional{T} = nothing
-    default::Optional{T} = nothing
-    choices::Optional{Vector{T}} = nothing
+    default::U = nothing
+    choices::Optional{AbstractVector{T}} = nothing
     required::Bool = false
     help::Optional{String} = nothing
     metavar::Optional{String} = nothing
     dest::Symbol
 end
 
-const VECTOR_TYPE = true
-const SCALAR_TYPE = false
-
 function Argument(name_or_flags::Union{Symbol,String}...;
     action::Union{Symbol,String,Nothing} = nothing,
-    nargs::Union{Int,Char,Nothing} = nothing,
+    nargs::Union{Int,Char,String,Nothing} = nothing,
     constant::R = nothing,
     default::Union{Vector{S},S} = nothing,
     type::DataType = Nothing,
-    choices::Union{Vector{T},T} = nothing,
+    choices::Union{AbstractVector{T},T} = nothing,
     dest::Union{Symbol,String,Nothing} = nothing,
-    kwargs...) where {R,S,T,U}
+    required::Bool = false,
+    kwargs...) where {R,S,T}
 
-    name, flag, flags = parse_name_flags(name_or_flags)
+    name, default_flag, flags = parse_name_flags(name_or_flags)
     if dest === nothing
         dest = name
     end
 
-    action = str_to_symbol(action)
-    dest = str_to_symbol(dest)
+    action = to_symbol(action)
+    dest = to_symbol(dest)
+    nargs = to_symbol(nargs)
 
     validate_action(action)
 
@@ -58,33 +59,40 @@ function Argument(name_or_flags::Union{Symbol,String}...;
     nargs = get_nargs(nargs, type, action)
     validate_nargs(nargs)
 
+    if isempty(flags)
+        # This is a positional argument, so check if it is required
+        required = nargs !== :? && nargs !== :*
+    end
+
     dest_is_vector = need_vector(action, nargs, default)
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
-    Argument{type, dest_is_vector}(;
+    Argument{type,typeof(default),dest_is_vector}(;
         name = name,
         flags = flags,
         nargs = nargs,
-        flag = flag,
+        default_flag = default_flag,
         action = action,
         constant = constant,
         default = default,
         choices = choices,
         dest = dest,
+        required = required,
         kwargs...)
 end
 
-str_to_symbol(s::AbstractString) = Symbol(s)
-str_to_symbol(s) = s
+
+to_symbol(::Nothing) = nothing
+to_symbol(n::Number) = n
+to_symbol(s) = Symbol(s)
 
 function need_vector(action, nargs, default)
     return action in [:append, :append_const] || multiple_values(nargs) || default isa AbstractVector
 end
 
 multiple_values(nargs::Integer) = nargs > 1
-multiple_values(nargs::Char) = nargs in ['+', '*']
-multiple_values(nargs) = false
+multiple_values(nargs::Symbol) = nargs in [:+, :*]
 
 function parse_name_flags(name_or_flags::Tuple{Vararg{Union{Symbol,String}}})
     if length(name_or_flags) === 1 && Base.isidentifier(name_or_flags[1])
@@ -93,10 +101,10 @@ function parse_name_flags(name_or_flags::Tuple{Vararg{Union{Symbol,String}}})
     end
 
     flag_names, flags = extract_flag_names(name_or_flags)
-    flag = longest(flags)
+    default_flag = longest(flags)
     name = longest(flag_names)
 
-    return name, flag, flags
+    return name, default_flag, flags
 end
 
 function extract_flag_names(input_flags)
@@ -124,11 +132,11 @@ end
 function coalesce_promote_types(types::DataType...)
     length(types) === 0 && return String
 
-    ret_type = types[1]
+    ret_type = Nothing
 
-    for type in types[2:end]
+    for type in types
         if type !== Nothing
-            ret_type = promote_type(ret_type, type)
+            ret_type = ret_type === Nothing ? type : promote_type(ret_type, type)
         end
     end
 
@@ -184,19 +192,24 @@ end
 
 validate_action(action) = nothing
 function validate_action(action::Symbol)
-    if !(action in [:store_true, :store_false, :store_const, :append, :append_const, :count])
+    if !(action in [:store_true, :store_false, :store_const, :append, :append_const, :count, :help])
         throw(ArgumentError("Invalid action: `$(String(action))`"))
     end
 end
 
 validate_nargs(nargs) = nothing
-function validate_nargs(nargs::Char)
-    if !(nargs in ['?', '+', '*'])
+function validate_nargs(nargs::Symbol)
+    if !(nargs in [:?, :+, :*])
         throw(ArgumentError("Invalid specifier `$nargs` for `nargs`"))
     end
 end
 
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
-get_nargs(nargs::Nothing, ::Type{Vector}, action) = '*'
-get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count] ? 0 : 1
-get_nargs(nargs::Union{Int, Char}, _, _) = nargs
+get_nargs(nargs::Nothing, ::Type{Vector}, action) = :*
+get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
+get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
+
+function arg_name(arg::Argument, to_uppercase = true)
+    name = to_uppercase ? uppercase(arg.name) : arg.name
+    return something(arg.metavar, name)
+end
