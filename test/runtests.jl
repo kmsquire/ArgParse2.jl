@@ -78,9 +78,9 @@ end
         parser = ArgumentParser()
         add_argument = argument_adder(parser)
 
-        add_argument("--foo", action = "append")
+        add_argument("--foo", action = "append", default=["0"])
 
-        @test parse_args(parser, split("--foo 1 --foo 2")) == (foo = ["1", "2"],)
+        @test parse_args(parser, split("--foo 1 --foo 2")) == (foo = ["0", "1", "2"],)
     end
 
     @testset "Append Constant" begin
@@ -324,6 +324,23 @@ end
             @test parse_args(parser, ["1"]) === (count=1,)
             @test_throws ArgumentError parse_args(parser, ["4"])
         end
+    end
+
+    @testset "Dest1" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+        add_argument("-a", action="append", dest="dest", default=["a"])
+        add_argument("-b", action="append", dest="dest", default=["a"])
+        @test parse_args(parser, []) == (dest=["a"],)
+        @test parse_args(parser, split("-a c -b d")) == (dest=["c", "d"],)
+    end
+
+    @testset "Dest2" begin
+        parser = ArgumentParser()
+        add_argument = argument_adder(parser)
+        add_argument("-a", action="append", dest="dest", default=["a"])
+        add_argument("-b", action="append", dest="dest", default=["b"])
+        @test_throws ArgumentError parse_args(parser, [])
     end
 
     @testset "Construction Errors" begin
