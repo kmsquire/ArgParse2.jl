@@ -150,8 +150,8 @@ end
     end
 end
 
-@testset "Miscellaneous" begin
-    @testset "Arguments with '-' (1)" begin
+@testset "Arguments" begin
+    @testset "Negative numerical arguments (1)" begin
         parser = ArgumentParser(prog="PROG")
         add_argument = argument_adder(parser)
 
@@ -166,7 +166,7 @@ end
 
     end
 
-    @testset "Arguments with '-' (2)" begin
+    @testset "Negative numerical arguments (1)" begin
         parser = ArgumentParser(prog="PROG")
         add_argument = argument_adder(parser)
         add_argument("-1", dest="one")
@@ -180,6 +180,71 @@ end
 
         # negative number options present, so both -1s are options
         @test_throws ArgumentError parse_args(parser, ["-1", "-1"])
+    end
+
+    @testset "Multiple Arguments" begin
+        @testset "?" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("bar", nargs="?")
+            add_argument("-f", nargs="?")
+
+            @test parse_args(parser, []) === (bar=nothing, f=nothing)
+            @test parse_args(parser, ["-f"]) === (bar=nothing, f=nothing)
+            @test parse_args(parser, ["-f", "-1"]) === (bar=nothing, f="-1")
+            @test parse_args(parser, ["-f", "-1", "-2"]) === (bar="-2", f="-1")
+            @test parse_args(parser, ["a", "-f", "-1"]) === (bar="a", f="-1")
+        end
+
+        @testset "*" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("bar", nargs="*")
+            add_argument("-f", nargs="*")
+
+            # Python's behavior
+            @test_broken parse_args(parser, []) == (bar=nothing, f=nothing)
+            @test_broken parse_args(parser, ["-f"]) == (bar=nothing, f=nothing)
+            @test_broken parse_args(parser, ["-f", "-1"]) == (bar=nothing, f=["-1"])
+            @test_broken parse_args(parser, ["-f", "-1", "-2"]) == (bar=nothing, f=["-1", "-2"])
+
+            @test parse_args(parser, []) == (bar=[], f=[])
+            @test parse_args(parser, ["-f"]) == (bar=[], f=[])
+            @test parse_args(parser, ["-f", "-1"]) == (bar=[], f=["-1"])
+            @test parse_args(parser, ["-f", "-1", "-2"]) == (bar=[], f=["-1", "-2"])
+            @test parse_args(parser, ["a", "-f", "-1", "-2"]) == (bar=["a"], f=["-1", "-2"])
+            @test parse_args(parser, ["a", "b", "c", "-f", "-1", "-2"]) == (bar=["a", "b", "c"], f=["-1", "-2"])
+        end
+
+        @testset "+ (1)" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("-f", "--foo", nargs="+")
+
+            # Python's behavior
+            @test_broken parse_args(parser, ["a"]) == (foo=nothing)
+
+            @test parse_args(parser, []) == (foo=[],)
+            @test_throws ArgumentError parse_args(parser, ["-f"])
+        end
+
+        @testset "+ (2)" begin
+            parser = ArgumentParser()
+            add_argument = argument_adder(parser)
+            add_argument("bar", nargs="+")
+            add_argument("-f", "--foo", nargs="+")
+
+            @test_throws ArgumentError parse_args(parser, [])
+            # Python's behavior
+            @test_broken parse_args(parser, ["a"]) == (bar=["a"], foo=nothing)
+
+            @test parse_args(parser, ["a"]) == (bar=["a"], foo=[])
+
+            @test_throws ArgumentError parse_args(parser, ["a", "-f"])
+
+            @test parse_args(parser, ["a", "-f", "-1"]) == (bar=["a"], foo=["-1"],)
+            @test parse_args(parser, ["a", "b", "c", "-f", "-1", "-2"]) == (bar=["a", "b", "c"], foo=["-1", "-2"],)
+        end
     end
 end
 
