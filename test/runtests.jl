@@ -149,15 +149,15 @@ end
             in the wild.""")
         io = IOBuffer()
         show_help(io, parser, exit_when_done=false)
-        output = String(take!(io))
+        output = String(take!(io)) |> rstrip
 
-        @test output === """
+        @test output == ("""
         Usage: PROGRAM
 
         Frob the knob in the best way possible. Frobbing is an important step
         to take before fooing a bar, and is used in many fields when studying
         isoceles triangles in the wild.
-        """
+        """ |> rstrip)
     end
 
     @testset "Usage" begin

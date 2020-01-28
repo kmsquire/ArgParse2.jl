@@ -7,6 +7,7 @@ function show_help(io::IO, parser::ArgumentParser; exit_when_done = !isinteracti
 
     if parser.description !== nothing
         println_wrapped(io, parser.description)
+        println(io)
     end
 
     if !isempty(parser.positional_args)
