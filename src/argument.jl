@@ -1,12 +1,12 @@
 
-@kwdef struct Argument{T,V}
+@kwdef struct Argument{T,U,V}
     name::String
     flags::Vector{String}
     nargs::Union{Int,Char}
     default_flag::Optional{String} = nothing
     action::Optional{Symbol} = nothing
     constant::Optional{T} = nothing
-    default::Optional{T} = nothing
+    default::U = nothing
     choices::Optional{AbstractVector{T}} = nothing
     required::Bool = false
     help::Optional{String} = nothing
@@ -68,7 +68,7 @@ function Argument(name_or_flags::Union{Symbol,String}...;
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
-    Argument{type,dest_is_vector}(;
+    Argument{type,typeof(default),dest_is_vector}(;
         name = name,
         flags = flags,
         nargs = nargs,

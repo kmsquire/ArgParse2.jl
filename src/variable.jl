@@ -13,7 +13,7 @@ function get_value(v::Variable)
     return v.default_value
 end
 
-function empty_var(arg::Argument{T, V}) where {T,V}
+function empty_var(arg::Argument{T, <:Any, V}) where {T,V}
     dest_is_vector = V
     if dest_is_vector
         default = arg.default !== nothing ? arg.default : T[]
