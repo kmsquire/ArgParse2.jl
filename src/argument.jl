@@ -3,11 +3,11 @@
     name::String
     flags::Vector{String}
     nargs::Union{Int,Char}
-    flag::Optional{String} = nothing
+    default_flag::Optional{String} = nothing
     action::Optional{Symbol} = nothing
     constant::Optional{T} = nothing
     default::Optional{T} = nothing
-    choices::Optional{Vector{T}} = nothing
+    choices::Optional{AbstractVector{T}} = nothing
     required::Bool = false
     help::Optional{String} = nothing
     metavar::Optional{String} = nothing
@@ -23,11 +23,12 @@ function Argument(name_or_flags::Union{Symbol,String}...;
     constant::R = nothing,
     default::Union{Vector{S},S} = nothing,
     type::DataType = Nothing,
-    choices::Union{Vector{T},T} = nothing,
+    choices::Union{AbstractVector{T},T} = nothing,
     dest::Union{Symbol,String,Nothing} = nothing,
-    kwargs...) where {R,S,T,U}
+    required::Bool = false,
+    kwargs...) where {R,S,T}
 
-    name, flag, flags = parse_name_flags(name_or_flags)
+    name, default_flag, flags = parse_name_flags(name_or_flags)
     if dest === nothing
         dest = name
     end
@@ -58,6 +59,11 @@ function Argument(name_or_flags::Union{Symbol,String}...;
     nargs = get_nargs(nargs, type, action)
     validate_nargs(nargs)
 
+    if isempty(flags)
+        # This is a positional argument, so check if it is required
+        required = nargs !== :? && nargs !== :*
+    end
+
     dest_is_vector = need_vector(action, nargs, default)
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
@@ -66,12 +72,13 @@ function Argument(name_or_flags::Union{Symbol,String}...;
         name = name,
         flags = flags,
         nargs = nargs,
-        flag = flag,
+        default_flag = default_flag,
         action = action,
         constant = constant,
         default = default,
         choices = choices,
         dest = dest,
+        required = required,
         kwargs...)
 end
 
@@ -93,10 +100,10 @@ function parse_name_flags(name_or_flags::Tuple{Vararg{Union{Symbol,String}}})
     end
 
     flag_names, flags = extract_flag_names(name_or_flags)
-    flag = longest(flags)
+    default_flag = longest(flags)
     name = longest(flag_names)
 
-    return name, flag, flags
+    return name, default_flag, flags
 end
 
 function extract_flag_names(input_flags)

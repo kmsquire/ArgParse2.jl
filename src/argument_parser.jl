@@ -106,7 +106,7 @@ function get_required_args(parser::ArgumentParser)
     end
 
     for arg in parser.optional_args
-        arg.required && push!(required, arg.flag)
+        arg.required && push!(required, arg.default_flag)
     end
 
     return required_args
