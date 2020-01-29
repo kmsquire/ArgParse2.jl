@@ -182,7 +182,8 @@ end
         output=String(take!(io)) |> rstrip
 
         @test output == rstrip("""
-        Usage: PROGRAM --help -b [B] -a [A [A ...]] -r R [R ...] foo foo
+        Usage: PROGRAM [--help] [-b [B]] [-a [A [A ...]]] [-r R [R ...]] foo
+                      foo
 
         Positional arguments:
          foo          foo help
@@ -375,8 +376,14 @@ end
     @test_throws ArgumentError add_argument("-a", action="nothing")
 end
 
-@testset "Misc Errors" begin
-    @test_throws ArgumentError ArgParse2.format_arg_name("name", :(=), true)
+@testset "Argument/flag Formatting" begin
+    @test ArgParse2.format_flag("--flag", 1, "FLAG") === "--flag FLAG"
+    @test ArgParse2.format_flag("--flag", 2, "FLAG") === "--flag FLAG FLAG"
+    @test ArgParse2.format_flag("--flag", :?, "FLAG") === "--flag [FLAG]"
+    @test ArgParse2.format_flag("--flag", :*, "FLAG") === "--flag [FLAG [FLAG ...]]"
+    @test ArgParse2.format_flag("--flag", :+, "FLAG") === "--flag FLAG [FLAG ...]"
+
+    @test_throws ArgumentError ArgParse2.format_arg_name("name", :(=))
 end
 
 nothing
