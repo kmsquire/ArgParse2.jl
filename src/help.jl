@@ -47,7 +47,7 @@ function show_usage(io::IO, parser::ArgumentParser)
     else
         cmdline_name = length(ARGS) > 0 ? ARGS[1] : "PROGRAM"
         prog = something(parser.prog, cmdline_name)
-        options_str = join((format_flag(arg) for arg in parser.optional_args), ' ')
+        options_str = join((format_usage_flag(arg) for arg in parser.optional_args), ' ')
         params_str = join((format_arg_name(arg, false) for arg in parser.positional_args), ' ')
 
 
@@ -80,26 +80,30 @@ show_help(parser::ArgumentParser; exit_when_done::Bool = !isinteractive()) =
 
 function format_flags(arg::Argument)
     arg.nargs === 0 && return join(arg.flags, ", ")
-    return join([format_flag(flag, arg.nargs, arg_name(arg), arg.required) for flag in arg.flags], ", ")
+    return join([format_flag(flag, arg.nargs, arg_name(arg)) for flag in arg.flags], ", ")
 end
 
-format_flag(arg::Argument) = format_flag(arg.default_flag, arg.nargs, arg_name(arg), arg.required)
+format_usage_flag(arg::Argument) = format_usage_flag(arg.default_flag, arg.nargs, arg_name(arg), arg.required)
 
-function format_flag(flag, nargs, arg_name, required)
+function format_usage_flag(flag, nargs, arg_name, required)
+    required && return format_flag(flag, nargs, arg_name)
+    return '[' * format_flag(flag, nargs, arg_name) * ']'
+end
+
+function format_flag(flag, nargs, arg_name)
     nargs === 0 && return flag
-    flag_name_str = format_arg_name(arg_name, nargs, required)
+    flag_name_str = format_arg_name(arg_name, nargs)
     return "$flag $flag_name_str"
 end
 
 format_arg_name(arg::Argument, to_uppercase::Bool = true) =
-    format_arg_name(arg_name(arg, to_uppercase), arg.nargs, arg.required)
+    format_arg_name(arg_name(arg, to_uppercase), arg.nargs)
 
-function format_arg_name(name, nargs::Integer, required)
-    required && return join(fill(name, nargs), " ")
-    return "[$(join(fill(name, nargs), " "))]"
+function format_arg_name(name, nargs::Integer)
+    return join(fill(name, nargs), " ")
 end
 
-function format_arg_name(name, nargs, required)
+function format_arg_name(name, nargs)
     nargs === :? && return "[$name]"
     nargs === :* && return "[$name [$name ...]]"
     nargs === :+ && return "$name [$name ...]"

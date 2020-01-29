@@ -98,6 +98,34 @@ end
 julia_main()
 ```
 
+Running this gives
+
+```bash
+$ julia --project=.. frodo.jl -h
+Usage: frodo [--help] [--ring-size RING_SIZE] [--auto-hide] --friends
+              FRIEND [FRIEND ...] surname
+
+Welcome to Middle Earth
+
+Positional arguments:
+ surname      Your surname
+
+Optional arguments:
+ -h, --help   show this help message and exit
+ -s RING_SIZE, --ring-size RING_SIZE
+              Ring size
+ --auto-hide  Turn invisible when needed
+ --friends FRIEND [FRIEND ...]
+              friends help
+
+There is no real going back
+$ julia --project=.. frodo.jl Baggins --auto-hide --friends "Samwise Gangee" "Peregrin Took" "Meriadoc Brandybuck" "Fredegar Bolger"
+Welcome, Frodo Baggins!
+Let's get you fitted for a ring.  We'll need to measure your ring size.
+Orcs are near!  You turn invisible.
+You're traveling to Mordor with Samwise Gangee, Peregrin Took, Meriadoc Brandybuck and Fredegar Bolger.
+```
+
 ## Status
 
 At this point, `ArgParse2.jl` isn't feature full (e.g., commands are not implemented).
