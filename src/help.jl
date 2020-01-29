@@ -45,7 +45,7 @@ function show_usage(io::IO, parser::ArgumentParser)
     if parser.usage !== nothing
         println_wrapped(io, "Usage: $(parser.usage)\n"; subsequent_indent = ARG_HELP_INDENT, break_long_words = false)
     else
-        cmdline_name = length(ARGS) > 0 ? ARGS[1] : "PROGRAM"
+        cmdline_name = length(PROGRAM_FILE) > 0 ? PROGRAM_FILE : "PROGRAM"
         prog = something(parser.prog, cmdline_name)
         options_str = join((format_usage_flag(arg) for arg in parser.optional_args), ' ')
         params_str = join((format_arg_name(arg, false) for arg in parser.positional_args), ' ')

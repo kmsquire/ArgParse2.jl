@@ -12,8 +12,7 @@ using ArgParse2
 in_danger() = rand(Bool)
 
 function julia_main()::Cint
-    parser = ArgumentParser(prog = "frodo",
-                            description = "Welcome to Middle Earth",
+    parser = ArgumentParser(description = "Welcome to Middle Earth",
                             epilog = "There is no real going back")
 
     add_argument(parser, "surname", help = "Your surname")
