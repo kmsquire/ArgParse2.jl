@@ -103,8 +103,8 @@ Running this gives
 
 ```bash
 $ julia --project=.. frodo.jl -h
-Usage: frodo [--help] [--ring-size RING_SIZE] [--auto-hide] --friends
-              FRIEND [FRIEND ...] surname
+Usage: frodo [-h] [-s RING_SIZE] [--auto-hide] --friends FRIEND
+              [FRIEND ...] surname
 
 Welcome to Middle Earth
 

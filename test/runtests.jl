@@ -182,8 +182,7 @@ end
         output=String(take!(io)) |> rstrip
 
         @test output == rstrip("""
-        Usage: PROGRAM [--help] [-b [B]] [-a [A [A ...]]] [-r R [R ...]] foo
-                      foo
+        Usage: PROGRAM [-h] [-b [B]] [-a [A [A ...]]] [-r R [R ...]] foo foo
 
         Positional arguments:
          foo          foo help
