@@ -129,14 +129,16 @@ You're traveling to Mordor with Samwise Gangee, Peregrin Took, Meriadoc Brandybu
 
 ## Status
 
-At this point, `ArgParse2.jl` isn't feature full (e.g., commands are not implemented).
-Load/compile time is currently is faster than both parsers mentioned above, and (from some
-very minor testing) parse time is faster than `ArgParse.jl`  and about on par with `DocOpt.jl`
-(for the features supported).  That will probably change as more features are added (it might
-get slower).  There's probably room for optimization as well.
+At this point, `ArgParse2.jl` isn't feature full (e.g., commands are not implemented) but it is
+quite usable for simple command line parsing.
+
+Load/compile time is currently faster than both parsers mentioned above, and (from some very
+minor testing) parse time is faster than `ArgParse.jl` and about on par with `DocOpt.jl` (for
+the features supported).  That will probably change as more features are added (it might get slower).
+There's probably room for optimization as well.
 
 There's no documentation yet--for now, you can use the example above (also in the `examples`
 directory) and the tests as guidelines.
 
-If you're familiar with Python's argparse library,
+If you're familiar with Python's `argparse` library,
 this library should feel very familiar.
