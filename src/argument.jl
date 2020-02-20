@@ -1,35 +1,36 @@
 const VECTOR_TYPE = true
 const SCALAR_TYPE = false
 
-@kwdef struct Argument{T,U,V}
+struct Argument{T,U,V}
     name::String
     flags::Vector{String}
     nargs::Union{Int,Symbol}
-    default_flag::Optional{String} = nothing
-    action::Optional{Symbol} = nothing
-    constant::Optional{T} = nothing
-    default::U = nothing
-    choices::Optional{AbstractVector{T}} = nothing
-    required::Bool = false
-    help::Optional{String} = nothing
-    metavar::Optional{String} = nothing
+    default_flag::Optional{String}
+    action::Optional{Symbol}
+    constant::Optional{T}
+    default::U
+    choices::Optional{AbstractVector{T}}
+    required::Bool
+    help::Optional{String}
+    metavar::Optional{String}
     dest::Symbol
 end
 
 function Argument(name_or_flags::Union{Symbol,String}...;
-    action::Union{Symbol,String,Nothing} = nothing,
+    type::DataType = Nothing,
     nargs::Union{Int,Char,String,Nothing} = nothing,
+    action::Union{Symbol,String,Nothing} = nothing,
     constant::R = nothing,
     default::Union{Vector{S},S} = nothing,
-    type::DataType = Nothing,
     choices::Union{AbstractVector{T},T} = nothing,
-    dest::Union{Symbol,String,Nothing} = nothing,
     required::Bool = false,
-    kwargs...) where {R,S,T}
+    help::Optional{String} = nothing,
+    metavar::Optional{String} = nothing,
+    dest::Union{Symbol,String,Nothing} = nothing) where {R,S,T}
 
     name, default_flag, flags = parse_name_flags(name_or_flags)
     if dest === nothing
-        dest = name
+        dest = Symbol(name)
     end
 
     action = to_symbol(action)
@@ -68,18 +69,19 @@ function Argument(name_or_flags::Union{Symbol,String}...;
 
     validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
 
-    Argument{type,typeof(default),dest_is_vector}(;
-        name = name,
-        flags = flags,
-        nargs = nargs,
-        default_flag = default_flag,
-        action = action,
-        constant = constant,
-        default = default,
-        choices = choices,
-        dest = dest,
-        required = required,
-        kwargs...)
+    Argument{type,typeof(default),dest_is_vector}(
+        name,
+        flags,
+        nargs,
+        default_flag,
+        action,
+        constant,
+        default,
+        choices,
+        required,
+        help,
+        metavar,
+        dest)
 end
 
 
@@ -146,7 +148,8 @@ function coalesce_promote_types(types::DataType...)
 end
 
 function validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
-
+    @nospecialize
+    
     if action in [:store_true, :store_false, :store_const, :append_const, :count]
         # Test that nargs and action are consistent
         if nargs !== nothing && nargs !== 0

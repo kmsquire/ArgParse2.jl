@@ -1,6 +1,5 @@
 module ArgParse2
 
-using Base: @kwdef
 using OrderedCollections: LittleDict
 using TextWrap: println_wrapped, wrap
 
@@ -14,5 +13,9 @@ include("variable.jl")
 include("argument_parser.jl")
 include("help.jl")
 include("parse.jl")
+
+include("precompile.jl")
+
+_precompile_()
 
 end # module
