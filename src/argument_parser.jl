@@ -24,18 +24,23 @@ function ArgumentParser(;
     has_numeric_flags = Ref{Bool}(false)
 
     parser = ArgumentParser(prog, usage, description, epilog, positional_args, optional_args, flag_args, has_numeric_flags)
-    add_help && add_argument(parser, "-h", "--help", action = "help", help = HELP_TEXT)
+    add_help && add_argument!(parser, "-h", "--help", action = "help", help = HELP_TEXT)
 
     return parser
 end
 
 function argument_adder(parser::ArgumentParser)
-    function add_argument(name_or_flags::String...; kwargs...)
-        ArgParse2.add_argument(parser, name_or_flags...; kwargs...)
+    function add_argument!(name_or_flags::String...; kwargs...)
+        ArgParse2.add_argument!(parser, name_or_flags...; kwargs...)
     end
 end
 
-function add_argument(parser::ArgumentParser, name_or_flags::String...; kwargs...)
+function add_argument(args...; kwargs...)
+    @warn """add_argument(...) is deprecated and will be removed before ArgParse2 is registered.
+             Please use add_argument!(...)""" maxlog=1
+end
+
+function add_argument!(parser::ArgumentParser, name_or_flags::String...; kwargs...)
     arg = Argument(name_or_flags...; kwargs...)
 
     if is_positional(arg)
