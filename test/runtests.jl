@@ -127,9 +127,19 @@ end
         parser = ArgumentParser()
         io = IOBuffer()
         show_help(io, parser, exit_when_done=false)
-        output = String(take!(io)) |> rstrip
+        output = String(take!(io)) |> rstrip |> x -> split(x, "\n") |> last |> lstrip
 
-        @test occursin(Regex("-h, --help +$(ArgParse2.HELP_TEXT)\$"), output)
+        @test output == "-h, --help   $(ArgParse2.HELP_TEXT)"
+    end
+
+    @testset "No Prog" begin
+        parser = ArgumentParser(description="Test missing prog")
+        add_argument(parser, "foo")
+        io = IOBuffer()
+        show_help(io, parser, exit_when_done=false)
+        output = String(take!(io)) |> x -> split(x, "\n") |> first
+
+        @test output == "Usage: PROGRAM [-h] foo"
     end
 
     @testset "Prog" begin
@@ -182,8 +192,7 @@ end
         output=String(take!(io)) |> rstrip
 
         @test output == rstrip("""
-        Usage: PROGRAM [--help] [-b [B]] [-a [A [A ...]]] [-r R [R ...]] foo
-                      foo
+        Usage: PROGRAM [-h] [-b [B]] [-a [A [A ...]]] [-r R [R ...]] foo foo
 
         Positional arguments:
          foo          foo help

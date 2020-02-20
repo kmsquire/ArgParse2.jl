@@ -101,7 +101,7 @@ function parse_name_flags(name_or_flags::Tuple{Vararg{Union{Symbol,String}}})
     end
 
     flag_names, flags = extract_flag_names(name_or_flags)
-    default_flag = longest(flags)
+    default_flag = flags[1]
     name = longest(flag_names)
 
     return name, default_flag, flags
