@@ -43,7 +43,7 @@ attempt to do better.
 Some differences from `ArgParse.jl`:
 
 * More closely copies the interface from Python's argparse.  In particular, all but one of the
-  (supported) arguments to `ArgumentParser` and `add_argument` have the same names.  (`const`
+  (supported) arguments to `ArgumentParser` and `add_argument!` have the same names.  (`const`
   is a keyword in Julia, so that was renamed to `constant`)
 * `ArgParse2.jl` uses functions instead of macros for setting up the parser, so the parsing
   setup is somewhat different.  Again, this is more similar to Python's `argparse`.
@@ -66,14 +66,14 @@ function julia_main()::Cint
                             description = "Welcome to Middle Earth",
                             epilog = "There is no real going back")
 
-    add_argument(parser, "surname", help = "Your surname")
-    add_argument(parser, "-s", "--ring-size", type = Int, help = "Ring size")
-    add_argument(parser,
+    add_argument!(parser, "surname", help = "Your surname")
+    add_argument!(parser, "-s", "--ring-size", type = Int, help = "Ring size")
+    add_argument!(parser,
         "--auto-hide",
         action = "store_true",
         default = false,
         help = "Turn invisible when needed")
-    add_argument(parser, "--friends", metavar="FRIEND", nargs = "+", required = true)
+    add_argument!(parser, "--friends", metavar="FRIEND", nargs = "+", required = true)
 
     args = parse_args(parser)
 

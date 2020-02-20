@@ -1,7 +1,7 @@
 function _precompile_()
     ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
-    precompile(Tuple{Core.kwftype(typeof(ArgParse2.add_argument)),NamedTuple{(:action, :help),Tuple{String,String}},typeof(add_argument),ArgumentParser,String,Vararg{String,N} where N})
-    precompile(Tuple{Core.kwftype(typeof(ArgParse2.add_argument)),NamedTuple{(:action, :help),Tuple{String,String}},typeof(add_argument),ArgumentParser,String,Vararg{String,N} where N})
+    precompile(Tuple{Core.kwftype(typeof(ArgParse2.add_argument!)),NamedTuple{(:action, :help),Tuple{String,String}},typeof(add_argument!),ArgumentParser,String,Vararg{String,N} where N})
+    precompile(Tuple{Core.kwftype(typeof(ArgParse2.add_argument!)),NamedTuple{(:action, :help),Tuple{String,String}},typeof(add_argument!),ArgumentParser,String,Vararg{String,N} where N})
     precompile(Tuple{Core.kwftype(typeof(ArgParse2.show_help)),NamedTuple{(:exit_when_done,),Tuple{Bool}},typeof(show_help),Base.PipeEndpoint,ArgumentParser})
     precompile(Tuple{Core.var"#kw#Type",NamedTuple{(:action, :default),Tuple{String,Int64}},Type{ArgParse2.Argument},String,String})
     precompile(Tuple{Core.var"#kw#Type",NamedTuple{(:action, :help),Tuple{String,String}},Type{ArgParse2.Argument},String,String})

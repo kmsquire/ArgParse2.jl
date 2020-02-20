@@ -15,14 +15,14 @@ function julia_main()::Cint
     parser = ArgumentParser(description = "Welcome to Middle Earth",
                             epilog = "There is no real going back")
 
-    add_argument(parser, "surname", help = "Your surname")
-    add_argument(parser, "-s", "--ring-size", type = Int, help = "Ring size")
-    add_argument(parser,
+    add_argument!(parser, "surname", help = "Your surname")
+    add_argument!(parser, "-s", "--ring-size", type = Int, help = "Ring size")
+    add_argument!(parser,
         "--auto-hide",
         action = "store_true",
         default = false,
         help = "Turn invisible when needed")
-    add_argument(parser, "--friends", metavar="FRIEND", nargs = "+", required = true)
+    add_argument!(parser, "--friends", metavar="FRIEND", nargs = "+", required = true)
 
     args = parse_args(parser)
 
