@@ -149,7 +149,7 @@ end
 
 function validate_args(action, nargs, constant, default, type, choices, dest_is_vector)
     @nospecialize
-    
+
     if action in [:store_true, :store_false, :store_const, :append_const, :count]
         # Test that nargs and action are consistent
         if nargs !== nothing && nargs !== 0
@@ -208,7 +208,7 @@ function validate_nargs(nargs::Symbol)
 end
 
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
-get_nargs(nargs::Nothing, ::Type{Vector}, action) = :*
+get_nargs(nargs::Nothing, ::Type{<:Vector}, action) = :*
 get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
 get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
 

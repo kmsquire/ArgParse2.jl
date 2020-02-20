@@ -395,4 +395,22 @@ end
     @test_throws ArgumentError ArgParse2.format_arg_name("name", :(=))
 end
 
+@testset "Misc" begin
+    @test ArgParse2.to_symbol(1) === 1
+    for action in [:store_true, :store_false, :store_const, :append_const, :count]
+        @test_throws ArgumentError ArgParse2.validate_args(
+            action, nothing, nothing, nothing, nothing, ["true", "false"], false
+        )
+    end
+    @test ArgParse2.validate_action("hi") === nothing
+    @test ArgParse2.validate_nargs(1) === nothing
+    @test ArgParse2.get_nargs(nothing, Bool, :store_true) === 0
+    @test ArgParse2.get_nargs(nothing, Vector{String}, nothing) === :*
+    @test ArgParse2.get_nargs(1, String, nothing) === 1
+    @test ArgParse2.get_nargs(:*, String, nothing) === :*
+    @test ArgParse2.get_nargs(:+, String, nothing) === :+
+    @test ArgParse2.parse_item(String, "somestring", :arg) == "somestring"
+    @test_throws ArgumentError ArgParse2.process_zero_arg_flag(nothing, :bad_action, nothing, nothing, nothing, nothing)
+end
+
 nothing
