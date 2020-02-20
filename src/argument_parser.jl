@@ -37,7 +37,8 @@ end
 
 function add_argument(args...; kwargs...)
     @warn """add_argument(...) is deprecated and will be removed before ArgParse2 is registered.
-             Please use add_argument!(...)""" maxlog=1
+             Please use add_argument!(...)""" maxlog = 1
+    add_argument!(args...; kwargs...)
 end
 
 function add_argument!(parser::ArgumentParser, name_or_flags::String...; kwargs...)

@@ -414,6 +414,7 @@ end
 
     parser = ArgumentParser(description="Test missing prog")
     @test_logs (:warn, r"add_argument\(...\) is deprecated.*") add_argument(parser, "foo")
+    @test parse_args(parser, ["bar"]) === (foo = "bar",)
 end
 
 nothing
