@@ -6,12 +6,12 @@ makedocs(;
     pages=[
         "Home" => "index.md",
     ],
-    repo="https://github.com/kevin.squire@gmail.com/ArgParse2.jl/blob/{commit}{path}#L{line}",
+    repo="https://github.com/kmsquire/ArgParse2.jl/blob/{commit}{path}#L{line}",
     sitename="ArgParse2.jl",
     authors="Kevin Squire",
     assets=String[],
 )
 
 deploydocs(;
-    repo="github.com/kevin.squire@gmail.com/ArgParse2.jl",
+    repo="github.com/kmsquire/ArgParse2.jl",
 )
