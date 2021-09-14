@@ -125,7 +125,8 @@ function iterate_positional_args(nargs::Symbol, var, positional_args, argument, 
     return iterate(positional_args, positional_state)
 end
 
-parse_item(::Type{T}, str::AbstractString, name) where T <: Number = parse(T, str)
+parse_item(::Type{T}, str::AbstractString, name) where T = parse(T, str)
+parse_item(::Type{Optional{T}}, str::AbstractString, name) where T = parse(T, str)
 parse_item(::Type{<:AbstractString}, str::AbstractString, name) = str
 
 function parse_item(::Type{<:AbstractChar}, str::AbstractString, name)

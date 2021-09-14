@@ -17,7 +17,7 @@ struct Argument{T,U,V}
 end
 
 function Argument(name_or_flags::Union{Symbol,String}...;
-    type::DataType = Nothing,
+    type::Union{DataType, Union} = Nothing,
     nargs::Union{Int,Char,String,Nothing} = nothing,
     action::Union{Symbol,String,Nothing} = nothing,
     constant::R = nothing,
@@ -207,9 +207,10 @@ function validate_nargs(nargs::Symbol)
     end
 end
 
+get_nargs(nargs::Nothing, ::Type{Union{Nothing,T}}, action) where T = get_nargs(nargs, T, action)
 get_nargs(nargs::Nothing, ::Type{Bool}, action) = 0
-get_nargs(nargs::Nothing, ::Type{<:Vector}, action) = :*
-get_nargs(nargs::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
+get_nargs(::Nothing, ::Type{<:Vector}, action) = :*
+get_nargs(::Nothing, _, action) = action in [:store_true, :store_false, :store_const, :append_const, :count, :help] ? 0 : 1
 get_nargs(nargs::Union{Int,Symbol}, _, _) = nargs
 
 function arg_name(arg::Argument, to_uppercase = true)
